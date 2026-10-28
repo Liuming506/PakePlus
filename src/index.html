@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人力资源管理系统 - 组织架构 · 员工档案 · 合同预警</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1a1a2e; font-size: 14px; }
+  .app { display: flex; min-height: 100vh; }
+
+  /* 侧边栏 */
+  .sidebar { width: 220px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; }
+  .logo { padding: 22px 20px 10px; font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+  .logo span { color: #4fc3f7; }
+  .company-name { padding: 0 20px 16px; font-size: 12px; color: #8892b0; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 12px; word-break: break-all; }
+  .nav { flex: 1; padding: 0 10px; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 8px; color: #a8b2c8; cursor: pointer; margin-bottom: 4px; transition: all .15s; font-size: 14px; text-decoration: none; }
+  .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .nav-item.active { background: linear-gradient(135deg, rgba(79,195,247,.25), rgba(41,182,246,.15)); color: #4fc3f7; font-weight: 600; }
+  .badge { background: #ff5252; color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 10px; font-weight: 700; }
+  .sidebar-footer { padding: 14px 20px; font-size: 11px; color: #5a6373; line-height: 1.6; border-top: 1px solid rgba(255,255,255,.08); }
+
+  /* 主区域 */
+  .main { flex: 1; margin-left: 220px; padding: 24px 32px 48px; min-width: 0; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .page-header h1 { font-size: 22px; font-weight: 700; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; background: #fff; padding: 6px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); width: fit-content; }
+  .tab { padding: 8px 20px; border: none; background: none; border-radius: 7px; cursor: pointer; font-size: 14px; font-family: inherit; color: #5a6373; transition: all .15s; }
+  .tab.active { background: #4fc3f7; color: #fff; font-weight: 600; }
+  .tab:hover:not(.active) { background: #f0f2f5; }
+
+  /* 统计卡片 */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.06); position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #4fc3f7; }
+  .stat-card:nth-child(2)::before { background: #66bb6a; }
+  .stat-card:nth-child(3)::before { background: #ffa726; }
+  .stat-card:nth-child(4)::before { background: #ab47bc; }
+  .stat-card .label { font-size: 13px; color: #8892a0; margin-bottom: 6px; font-weight: 500; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .value .unit { font-size: 13px; color: #8892a0; font-weight: 400; margin-left: 3px; }
+
+  /* 工具栏 */
+  .toolbar { background: #fff; border-radius: 12px; padding: 14px 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .toolbar input, .toolbar select { padding: 9px 13px; border: 1px solid #dfe3e8; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; background: #f8f9fb; transition: all .2s; }
+  .toolbar input:focus, .toolbar select:focus { border-color: #4fc3f7; background: #fff; box-shadow: 0 0 0 3px rgba(79,195,247,.12); }
+  .toolbar input[type="text"] { flex: 1; min-width: 200px; }
+
+  /* 按钮 */
+  .btn { border: none; cursor: pointer; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all .15s; padding: 9px 18px; font-weight: 500; }
+  .btn-primary { background: linear-gradient(135deg, #4fc3f7, #29b6f6); color: #fff; }
+  .btn-primary:hover { box-shadow: 0 4px 12px rgba(79,195,247,.4); transform: translateY(-1px); }
+  .btn-secondary { background: #f0f2f5; color: #5a6373; }
+  .btn-secondary:hover { background: #e4e7eb; }
+  .btn-danger { background: #ffebee; color: #c62828; }
+  .btn-danger:hover { background: #ffcdd2; }
+  .btn-cancel { background: #f0f2f5; color: #5a6373; padding: 9px 22px; }
+  .btn-cancel:hover { background: #e4e7eb; }
+  .btn-submit { background: linear-gradient(135deg, #4fc3f7, #29b6f6); color: #fff; padding: 9px 26px; }
+  .btn-submit:hover { box-shadow: 0 4px 12px rgba(79,195,247,.4); }
+  .btn-icon { background: none; border: none; cursor: pointer; padding: 5px 9px; border-radius: 6px; font-size: 13px; font-family: inherit; color: #1976d2; transition: all .15s; }
+  .btn-icon:hover { background: #e3f2fd; }
+  .btn-icon.btn-del { color: #d32f2f; }
+  .btn-icon.btn-del:hover { background: #ffebee; }
+  .btn-mini { padding: 0 12px; font-size: 13px; white-space: nowrap; background: #eef1f4; color: #5a6373; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; }
+  .btn-mini:hover { background: #e4e7eb; }
+
+  /* 卡片 & 表格 */
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 16px; }
+  .card-pad { padding: 20px 22px; }
+  .card h3 { font-size: 15px; margin-bottom: 10px; }
+  .card p { color: #5a6373; line-height: 1.7; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #f8f9fb; }
+  th { padding: 13px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #5a6373; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #eef1f4; white-space: nowrap; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { background: #eef1f4; }
+  .sort-arrow { font-size: 10px; margin-left: 3px; }
+  .sort-arrow.idle { color: #c5cbd3; }
+  .sort-arrow.asc, .sort-arrow.desc { color: #4fc3f7; }
+  td { padding: 12px 14px; font-size: 13.5px; border-bottom: 1px solid #f2f4f7; }
+  tbody tr:hover { background: #f8fbfe; }
+  tbody tr:last-child td { border-bottom: none; }
+  .avatar { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #4fc3f7, #29b6f6); color: #fff; font-size: 12px; font-weight: 600; margin-right: 6px; vertical-align: middle; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .tag-blue { background: #e3f2fd; color: #1565c0; }
+  .tag-green { background: #e8f5e9; color: #2e7d32; }
+  .tag-orange { background: #fff3e0; color: #e65100; }
+  .tag-red { background: #ffebee; color: #c62828; }
+  .tag-gray { background: #eceff1; color: #546e7a; }
+  .empty { text-align: center; padding: 48px 20px; color: #8892a0; }
+  .muted { color: #8892a0; font-weight: 400; font-size: 13px; }
+
+  /* 部门树 */
+  .company-root { padding: 18px 22px; font-size: 16px; font-weight: 700; border-bottom: 1px solid #f2f4f7; }
+  .dept-tree { padding: 8px 0; }
+  .dept-row { display: flex; align-items: center; gap: 10px; padding: 10px 22px; border-bottom: 1px solid #f7f8fa; flex-wrap: wrap; }
+  .dept-row:hover { background: #f8fbfe; }
+  .dept-icon { font-size: 16px; }
+  .dept-name { font-weight: 600; }
+  .dept-manager { font-size: 12px; color: #8892a0; }
+  .dept-count { font-size: 12px; color: #5a6373; background: #f0f2f5; padding: 2px 10px; border-radius: 20px; }
+  .dept-count.over { background: #ffebee; color: #c62828; font-weight: 600; }
+  .dept-actions { margin-left: auto; }
+  .dept-children { padding-left: 24px; }
+
+  /* 弹窗 */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(10,20,40,.5); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: modalIn .22s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+  .modal-header { padding: 22px 26px 0; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 24px; color: #8892a0; cursor: pointer; width: 32px; height: 32px; border-radius: 8px; }
+  .modal-close:hover { background: #f0f2f5; color: #1a1a2e; }
+  .modal-body { padding: 18px 26px; }
+  .modal-footer { padding: 14px 26px 24px; display: flex; justify-content: flex-end; gap: 10px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 13px; font-weight: 600; color: #5a6373; margin-bottom: 6px; }
+  .form-group label .req { color: #d32f2f; }
+  .form-group input, .form-group select, .form-group textarea { padding: 9px 13px; border: 1px solid #dfe3e8; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; background: #f8f9fb; transition: all .2s; }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #4fc3f7; background: #fff; box-shadow: 0 0 0 3px rgba(79,195,247,.12); }
+  .input-with-btn { display: flex; gap: 6px; }
+  .input-with-btn input { flex: 1; min-width: 0; }
+
+  /* 预警分组 */
+  .alert-group { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; overflow: hidden; }
+  .alert-group-head { padding: 14px 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .alert-group-head .cnt { font-size: 13px; font-weight: 500; }
+  .alert-expired .alert-group-head { background: #ffebee; color: #c62828; }
+  .alert-d7 .alert-group-head { background: #ffebee; color: #c62828; }
+  .alert-d30 .alert-group-head { background: #fff3e0; color: #e65100; }
+  .alert-d60 .alert-group-head { background: #fffde7; color: #f57f17; }
+  .alert-d90 .alert-group-head { background: #e3f2fd; color: #1565c0; }
+
+  /* 日志 */
+  .log-list { max-height: 70vh; overflow-y: auto; }
+  .log-list table td { vertical-align: top; }
+  .log-detail { color: #5a6373; font-size: 13px; line-height: 1.6; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1a1a2e; color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px; opacity: 0; transition: all .3s; z-index: 300; box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: 90vw; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.error { background: #d32f2f; }
+
+  @media (max-width: 860px) {
+    .sidebar { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .logo, .company-name { padding: 12px 16px; }
+    .company-name { border: none; margin: 0; }
+    .nav { display: flex; flex: 1 1 100%; padding: 6px 10px 10px; overflow-x: auto; }
+    .nav-item { white-space: nowrap; margin: 0 4px 0 0; }
+    .sidebar-footer { display: none; }
+    .app { flex-direction: column; }
+    .main { margin-left: 0; padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span>HR</span> 管理系统</div>
+    <div class="company-name" id="companyLabel">示例科技有限公司</div>
+    <nav class="nav" id="nav">
+      <a class="nav-item active" data-view="org">🏢 组织架构</a>
+      <a class="nav-item" data-view="employees">👤 员工档案</a>
+      <a class="nav-item" data-view="contracts">📄 合同管理</a>
+      <a class="nav-item" data-view="alerts">🔔 到期预警 <span class="badge" id="alertBadge" style="display:none">0</span></a>
+      <a class="nav-item" data-view="logs">📋 操作日志</a>
+      <a class="nav-item" data-view="backup">💾 数据备份</a>
+    </nav>
+    <div class="sidebar-footer">
+      数据保存在本机浏览器<br>
+      <small>请定期使用「数据备份」导出</small>
+    </div>
+  </aside>
+  <main class="main">
+    <div id="viewRoot"></div>
+  </main>
+</div>
+<div id="modalRoot"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===================== 工具函数 ===================== */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function getWorkYears(hireDate, leaveDate) {
+  if (!hireDate) return '—';
+  const start = new Date(hireDate);
+  const end = leaveDate ? new Date(leaveDate) : new Date();
+  if (end < start) return '—';
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  if (months < 0) { years--; months += 12; }
+  if (years <= 0 && months <= 0) return '不足1个月';
+  let s = '';
+  if (years > 0) s += years + '年';
+  if (months > 0) s += months + '个月';
+  return s;
+}
+function getWorkDays(hireDate, leaveDate) {
+  if (!hireDate) return 0;
+  const start = new Date(hireDate);
+  const end = leaveDate ? new Date(leaveDate) : new Date();
+  return Math.max(0, Math.floor((end - start) / 86400000));
+}
+
+/* ---- 校验函数 ---- */
+function validateIdCard(id) {
+  if (!id) return true;
+  const reg = /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/;
+  if (!reg.test(id)) return false;
+  const weights = [7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+  const codes = '10X98765432';
+  let sum = 0;
+  for (let i = 0; i < 17; i++) sum += parseInt(id[i], 10) * weights[i];
+  return codes[sum % 11] === id[17].toUpperCase();
+}
+function validatePhone(p) {
+  return !p || /^1[3-9]\d{9}$/.test(p);
+}
+function validateEmail(e) {
+  return !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+/* ---- 合同分级 ---- */
+function classifyContract(endDate, status) {
+  if (!endDate || status !== '生效中') return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const end = new Date(endDate); end.setHours(0,0,0,0);
+  const diff = Math.ceil((end - today) / 86400000);
+  if (diff < 0)    return { level: 'expired', diff, label: `已过期 ${-diff} 天`, color: '#c62828', bg: '#ffebee' };
+  if (diff <= 7)   return { level: 'd7',  diff, label: `${diff} 天后到期`, color: '#c62828', bg: '#ffebee' };
+  if (diff <= 30)  return { level: 'd30', diff, label: `${diff} 天后到期`, color: '#e65100', bg: '#fff3e0' };
+  if (diff <= 60)  return { level: 'd60', diff, label: `${diff} 天后到期`, color: '#f57f17', bg: '#fffde7' };
+  if (diff <= 90)  return { level: 'd90', diff, label: `${diff} 天后到期`, color: '#1565c0', bg: '#e3f2fd' };
+  return { level: 'safe', diff, label: `${diff} 天`, color: '#546e7a', bg: '#eceff1' };
+}
+
+/* ===================== 数据层 ===================== */
+const STORAGE_KEY = 'hrm_stage1_data_v1';
+let db = {};
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch (e) {
+    toast('⚠️ 数据保存失败，浏览器存储可能已满', true);
+  }
+}
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      db = JSON.parse(raw);
+      if (!db.departments || !db.employees || !db.contracts) throw new Error('数据不完整');
+      if (!db.auditLog) db.auditLog = [];
+      return;
+    } catch (e) { /* 损坏则重置 */ }
+  }
+  initDemo();
+}
+function initDemo() {
+  const now = new Date();
+  const d = (offset) => {
+    const dt = new Date(now);
+    dt.setDate(dt.getDate() + offset);
+    return dt.toISOString().slice(0, 10);
+  };
+  db = {
+    companyName: '示例科技有限公司',
+    departments: [
+      { id: 'd1',  name: '技术部',     parentId: null, manager: '李四', headcount: 10, sort: 1 },
+      { id: 'd11', name: '前端组',     parentId: 'd1', manager: '张三', headcount: 4,  sort: 1 },
+      { id: 'd12', name: '后端组',     parentId: 'd1', manager: '李四', headcount: 6,  sort: 2 },
+      { id: 'd2',  name: '人事行政部', parentId: null, manager: '王五', headcount: 3,  sort: 2 },
+      { id: 'd3',  name: '财务部',     parentId: null, manager: '',     headcount: 2,  sort: 3 }
+    ],
+    positions: [
+      { id: 'p1', name: '前端工程师', deptId: 'd11', level: 'P5' },
+      { id: 'p2', name: '后端工程师', deptId: 'd12', level: 'P6' },
+      { id: 'p3', name: 'HR 专员',    deptId: 'd2',  level: 'P4' },
+      { id: 'p4', name: '会计',       deptId: 'd3',  level: 'P5' }
+    ],
+    employees: [
+      { id: 'e1', empNo: 'EMP001', name: '张三', gender: '男', birthDate: '1995-06-12', idCard: '', phone: '13800000001', email: 'zhangsan@example.com', education: '本科', deptId: 'd11', positionId: 'p1', supervisorId: 'e2', hireDate: d(-700), employType: '正式', status: '在职', resignDate: '', remark: '' },
+      { id: 'e2', empNo: 'EMP002', name: '李四', gender: '男', birthDate: '1990-02-20', idCard: '', phone: '13800000002', email: 'lisi@example.com', education: '硕士', deptId: 'd12', positionId: 'p2', supervisorId: '', hireDate: d(-1200), employType: '正式', status: '在职', resignDate: '', remark: '' },
+      { id: 'e3', empNo: 'EMP003', name: '王五', gender: '女', birthDate: '1992-11-08', idCard: '', phone: '13800000003', email: 'wangwu@example.com', education: '本科', deptId: 'd2', positionId: 'p3', supervisorId: '', hireDate: d(-1500), employType: '正式', status: '在职', resignDate: '', remark: '' },
+      { id: 'e4', empNo: 'EMP004', name: '赵六', gender: '女', birthDate: '1998-08-15', idCard: '', phone: '13800000004', email: 'zhaoliu@example.com', education: '大专', deptId: 'd3', positionId: 'p4', supervisorId: '', hireDate: d(-200), employType: '正式', status: '试用', resignDate: '', remark: '' },
+      { id: 'e5', empNo: 'EMP005', name: '孙七', gender: '男', birthDate: '1993-04-03', idCard: '', phone: '13800000005', email: 'sunqi@example.com', education: '本科', deptId: 'd11', positionId: 'p1', supervisorId: 'e1', hireDate: d(-900), employType: '正式', status: '离职', resignDate: d(-100), remark: '个人原因离职' }
+    ],
+    contracts: [
+      { id: 'c1', contractNo: 'HT-2024-001', employeeId: 'e1', type: '固定期限', startDate: d(-700), endDate: d(20),  signDate: d(-700), status: '生效中', remark: '' },
+      { id: 'c2', contractNo: 'HT-2024-002', employeeId: 'e2', type: '固定期限', startDate: d(-400), endDate: d(50),  signDate: d(-400), status: '生效中', remark: '' },
+      { id: 'c3', contractNo: 'HT-2022-003', employeeId: 'e3', type: '无固定期限', startDate: d(-1500), endDate: '', signDate: d(-1500), status: '生效中', remark: '' },
+      { id: 'c4', contractNo: 'HT-2025-004', employeeId: 'e4', type: '固定期限', startDate: d(-200), endDate: d(-10), signDate: d(-200), status: '生效中', remark: '待续签' },
+      { id: 'c5', contractNo: 'HT-2021-005', employeeId: 'e5', type: '固定期限', startDate: d(-900), endDate: d(-100), signDate: d(-900), status: '已终止', remark: '离职终止' }
+    ],
+    auditLog: []
+  };
+  saveData();
+}
+
+/* ---- 日志 ---- */
+function logAction(action, target, detail) {
+  if (!db.auditLog) db.auditLog = [];
+  db.auditLog.unshift({
+    id: uid(),
+    time: new Date().toLocaleString('zh-CN', { hour12: false }),
+    action, target, detail: detail || ''
+  });
+  if (db.auditLog.length > 500) db.auditLog = db.auditLog.slice(0, 500);
+}
+
+/* ---- 辅助查询 ---- */
+function getDeptName(id) {
+  const d = db.departments.find(x => x.id === id);
+  return d ? d.name : '';
+}
+function getPosName(id) {
+  const p = db.positions.find(x => x.id === id);
+  return p ? p.name : '';
+}
+function getNameById(id) {
+  const e = db.employees.find(x => x.id === id);
+  return e ? e.name : '';
+}
+function genEmpNo() {
+  const existing = db.employees
+    .map(e => e.empNo)
+    .filter(no => /^EMP\d+$/.test(no))
+    .map(no => parseInt(no.slice(3), 10) || 0);
+  const next = existing.length ? Math.max(...existing) + 1 : 1;
+  return 'EMP' + String(next).padStart(3, '0');
+}
+
+/* ===================== 导航 & 渲染 ===================== */
+let currentView = 'org';
+let orgTab = 'dept';
+let empSort = { field: 'empNo', dir: 'asc' };
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view);
+  });
+  renderView();
+}
+document.getElementById('nav').addEventListener('click', e => {
+  const item = e.target.closest('.nav-item');
+  if (item) switchView(item.dataset.view);
+});
+
+function renderView() {
+  const root = document.getElementById('viewRoot');
+  switch (currentView) {
+    case 'org':       root.innerHTML = renderOrg(); renderOrgContent(); break;
+    case 'employees': root.innerHTML = renderEmployees(); filterEmployees(); break;
+    case 'contracts': root.innerHTML = renderContracts(); filterContracts(); break;
+    case 'alerts':    root.innerHTML = renderAlerts(); break;
+    case 'logs':      root.innerHTML = renderLogs(); break;
+    case 'backup':    root.innerHTML = renderBackup(); break;
+  }
+  document.getElementById('companyLabel').textContent = db.companyName;
+  updateAlertBadge();
+}
+
+function updateAlertBadge() {
+  let count = 0;
+  db.contracts.forEach(c => {
+    const cls = classifyContract(c.endDate, c.status);
+    if (cls && ['expired', 'd7', 'd30'].includes(cls.level)) count++;
+  });
+  const badge = document.getElementById('alertBadge');
+  if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+  else { badge.style.display = 'none'; }
+}
+
+/* ===================== 组织架构 ===================== */
+function renderOrg() {
+  const deptActive = orgTab === 'dept' ? 'active' : '';
+  const posActive  = orgTab === 'position' ? 'active' : '';
+  return `
+    <div class="page-header"><h1>组织架构</h1></div>
+    <div class="tabs">
+      <button class="tab ${deptActive}" onclick="switchOrgTab('dept')">部门架构</button>
+      <button class="tab ${posActive}" onclick="switchOrgTab('position')">岗位管理</button>
+    </div>
+    <div id="orgContent"></div>
+  `;
+}
+function switchOrgTab(t) { orgTab = t; renderView(); }
+
+function renderOrgContent() {
+  const el = document.getElementById('orgContent');
+  el.innerHTML = orgTab === 'dept' ? renderDeptTab() : renderPosTab();
+}
+
+function buildDeptTree() {
+  const map = {};
+  db.departments.forEach(d => { map[d.id] = { ...d, children: [] }; });
+  const roots = [];
+  db.departments.forEach(d => {
+    if (d.parentId && map[d.parentId]) map[d.parentId].children.push(map[d.id]);
+    else roots.push(map[d.id]);
+  });
+  const sortFn = (a, b) => (a.sort || 0) - (b.sort || 0);
+  roots.sort(sortFn);
+  const sortDeep = (nodes) => { nodes.sort(sortFn); nodes.forEach(n => sortDeep(n.children)); };
+  sortDeep(roots);
+  return roots;
+}
+
+function renderDeptTab() {
+  const tree = buildDeptTree();
+  const activeEmp = db.employees.filter(e => e.status !== '离职').length;
+  return `
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="openDeptModal()">+ 新增部门</button>
+      <button class="btn btn-secondary" onclick="openCompanyModal()">✏️ 修改公司名称</button>
+    </div>
+    <div class="card">
+      <div class="company-root">🏢 ${escapeHtml(db.companyName)} <span class="muted">（在职员工 ${activeEmp} 人）</span></div>
+      <div class="dept-tree">
+        ${tree.length ? tree.map(n => renderDeptNode(n)).join('') : '<div class="empty">还没有部门，点击上方「新增部门」创建</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderDeptNode(node) {
+  const empCount = db.employees.filter(e => e.deptId === node.id && e.status !== '离职').length;
+  const over = node.headcount > 0 && empCount > node.headcount;
+  return `
+    <div class="dept-node">
+      <div class="dept-row">
+        <span class="dept-icon">${node.children.length ? '📂' : '📁'}</span>
+        <span class="dept-name">${escapeHtml(node.name)}</span>
+        ${node.manager ? `<span class="dept-manager">负责人：${escapeHtml(node.manager)}</span>` : ''}
+        <span class="dept-count ${over ? 'over' : ''}">编制 ${node.headcount || 0} / 在职 ${empCount}${over ? ' · 超编' : ''}</span>
+        <div class="dept-actions">
+          <button class="btn-icon" onclick="openDeptModal('${node.id}')">编辑</button>
+          <button class="btn-icon btn-del" onclick="deleteDept('${node.id}')">删除</button>
+        </div>
+      </div>
+      ${node.children.length ? `<div class="dept-children">${node.children.map(renderDeptNode).join('')}</div>` : ''}
+    </div>
+  `;
+}
+
+function getDescendantIds(deptId) {
+  const result = [];
+  const stack = [deptId];
+  while (stack.length) {
+    const cur = stack.pop();
+    db.departments.forEach(d => {
+      if (d.parentId === cur) { result.push(d.id); stack.push(d.id); }
+    });
+  }
+  return result;
+}
+
+function openDeptModal(id) {
+  const d = id ? db.departments.find(x => x.id === id) : null;
+  const exclude = id ? [id, ...getDescendantIds(id)] : [];
+  const parentOptions = db.departments
+    .filter(x => !exclude.includes(x.id))
+    .map(x => `<option value="${x.id}" ${d && d.parentId === x.id ? 'selected' : ''}>${escapeHtml(x.name)}</option>`)
+    .join('');
+  const body = `
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>部门名称 <span class="req">*</span></label>
+        <input type="text" id="m_dept_name" value="${d ? escapeHtml(d.name) : ''}" placeholder="如：技术部">
+      </div>
+      <div class="form-group full">
+        <label>上级部门</label>
+        <select id="m_dept_parent">
+          <option value="">（无，作为一级部门）</option>
+          ${parentOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>部门负责人</label>
+        <input type="text" id="m_dept_manager" value="${d ? escapeHtml(d.manager || '') : ''}" placeholder="姓名">
+      </div>
+      <div class="form-group">
+        <label>编制人数</label>
+        <input type="number" id="m_dept_headcount" value="${d ? (d.headcount || '') : ''}" min="0" placeholder="0">
+      </div>
+    </div>
+  `;
+  showModal(d ? '编辑部门' : '新增部门', body,
+    `<button class="btn btn-cancel" onclick="closeModal()">取消</button>
+     <button class="btn btn-submit" onclick="saveDept('${id || ''}')">保存</button>`);
+}
+
+function saveDept(id) {
+  const name = document.getElementById('m_dept_name').value.trim();
+  if (!name) return toast('请填写部门名称', true);
+  const parentId = document.getElementById('m_dept_parent').value || null;
+  const manager = document.getElementById('m_dept_manager').value.trim();
+  const headcount = parseInt(document.getElementById('m_dept_headcount').value, 10) || 0;
+
+  if (id) {
+    const d = db.departments.find(x => x.id === id);
+    if (!d) return;
+    if (parentId) {
+      const descendants = getDescendantIds(id);
+      if (parentId === id || descendants.includes(parentId)) {
+        return toast('上级部门不能是自己或自己的下级', true);
+      }
+    }
+    const before = { name: d.name, manager: d.manager || '', headcount: d.headcount || 0 };
+    Object.assign(d, { name, parentId, manager, headcount });
+    const changes = [];
+    if (before.name !== name) changes.push(`名称: ${before.name} → ${name}`);
+    if (before.manager !== manager) changes.push(`负责人: ${before.manager || '空'} → ${manager || '空'}`);
+    if (before.headcount !== headcount) changes.push(`编制: ${before.headcount} → ${headcount}`);
+    logAction('编辑部门', name, changes.join('；') || '无字段变更');
+  } else {
+    db.departments.push({ id: uid(), name, parentId, manager, headcount, sort: db.departments.length });
+    logAction('新增部门', name, `上级: ${parentId ? getDeptName(parentId) : '无'}`);
+  }
+  saveData(); closeModal(); renderView();
+  toast('✅ 部门已保存');
+}
+
+function deleteDept(id) {
+  const d = db.departments.find(x => x.id === id);
+  if (!d) return;
+  const children = db.departments.filter(x => x.parentId === id);
+  if (children.length) return toast('该部门下还有子部门，请先删除子部门', true);
+  const emps = db.employees.filter(e => e.deptId === id);
+  if (emps.length) return toast(`该部门下还有 ${emps.length} 名员工，请先调整员工部门`, true);
+  if (!confirm(`确定删除部门「${d.name}」吗？`)) return;
+  db.departments = db.departments.filter(x => x.id !== id);
+  logAction('删除部门', d.name, '');
+  saveData(); renderView();
+  toast('🗑️ 部门已删除');
+}
+
+function openCompanyModal() {
+  const body = `<div class="form-group"><label>公司名称</label>
+    <input type="text" id="m_company_name" value="${escapeHtml(db.companyName)}"></div>`;
+  showModal('修改公司名称', body,
+    `<button class="btn btn-cancel" onclick="closeModal()">取消</button>
+     <button class="btn btn-submit" onclick="saveCompany()">保存</button>`);
+}
+function saveCompany() {
+  const name = document.getElementById('m_company_name').value.trim();
+  if (!name) return toast('请输入公司名称', true);
+  const old = db.companyName;
+  db.companyName = name;
+  if (old !== name) logAction('修改公司名称', name, `${old} → ${name}`);
+  saveData(); closeModal(); renderView();
+  toast('✅ 公司名称已更新');
+}
+
+/* ---- 岗位管理 ---- */
+function renderPosTab() {
+  const rows = db.positions.map(p => {
+    const dept = db.departments.find(d => d.id === p.deptId);
+    const count = db.employees.filter(e => e.positionId === p.id && e.status !== '离职').length;
+    return `<tr>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td>${dept ? `<span class="tag tag-blue">${escapeHtml(dept.name)}</span>` : '—'}</td>
+      <td>${escapeHtml(p.level) || '—'}</td>
+      <td>${count}</td>
+      <td style="text-align:right">
+        <button class="btn-icon" onclick="openPosModal('${p.id}')">编辑</button>
+        <button class="btn-icon btn-del" onclick="deletePos('${p.id}')">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+  return `
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="openPosModal()">+ 新增岗位</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>岗位名称</th><th>所属部门</th><th>职级</th><th>在岗人数</th><th style="text-align:right">操作</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" class="empty">还没有岗位</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openPosModal(id) {
+  const p = id ? db.positions.find(x => x.id === id) : null;
+  const deptOptions = db.departments.map(d =>
+    `<option value="${d.id}" ${p && p.deptId === d.id ? 'selected' : ''}>${escapeHtml(d.name)}</option>`).join('');
+  const body = `
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>岗位名称 <span class="req">*</span></label>
+        <input type="text" id="m_pos_name" value="${p ? escapeHtml(p.name) : ''}" placeholder="如：前端工程师">
+      </div>
+      <div class="form-group">
+        <label>所属部门</label>
+        <select id="m_pos_dept">
+          <option value="">（未分配）</option>
+          ${deptOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>职级</label>
+        <input type="text" id="m_pos_level" value="${p ? escapeHtml(p.level || '') : ''}" placeholder="如：P5">
+      </div>
+    </div>
+  `;
+  showModal(p ? '编辑岗位' : '新增岗位', body,
+    `<button class="btn btn-cancel" onclick="closeModal()">取消</button>
+     <button class="btn btn-submit" onclick="savePos('${id || ''}')">保存</button>`);
+}
+
+function savePos(id) {
+  const name = document.getElementById('m_pos_name').value.trim();
+  if (!name) return toast('请填写岗位名称', true);
+  const deptId = document.getElementById('m_pos_dept').value || null;
+  const level = document.getElementById('m_pos_level').value.trim();
+  if (id) {
+    const p = db.positions.find(x => x.id === id);
+    if (p) {
+      const old = { name: p.name, deptId: p.deptId, level: p.level || '' };
+      Object.assign(p, { name, deptId, level });
+      const changes = [];
+      if (old.name !== name) changes.push(`名称: ${old.name} → ${name}`);
+      if (old.deptId !== deptId) changes.push(`部门: ${getDeptName(old.deptId) || '空'} → ${getDeptName(deptId) || '空'}`);
+      if (old.level !== level) changes.push(`职级: ${old.level || '空'} → ${level || '空'}`);
+      logAction('编辑岗位', name, changes.join('；') || '无字段变更');
+    }
+  } else {
+    db.positions.push({ id: uid(), name, deptId, level });
+    logAction('新增岗位', name, `部门: ${getDeptName(deptId) || '未分配'}`);
+  }
+  saveData(); closeModal(); renderView();
+  toast('✅ 岗位已保存');
+}
+
+function deletePos(id) {
+  const p = db.positions.find(x => x.id === id);
+  if (!p) return;
+  const used = db.employees.filter(e => e.positionId === id).length;
+  if (used) return toast(`还有 ${used} 名员工使用该岗位，无法删除`, true);
+  if (!confirm(`确定删除岗位「${p.name}」吗？`)) return;
+  db.positions = db.positions.filter(x => x.id !== id);
+  logAction('删除岗位', p.name, '');
+  saveData(); renderView();
+  toast('🗑️ 岗位已删除');
+}
+
+/* ===================== 员工档案 ===================== */
+function renderEmployees() {
+  const total = db.employees.length;
+  const active = db.employees.filter(e => e.status === '在职').length;
+  const probation = db.employees.filter(e => e.status === '试用').length;
+  const resigned = db.employees.filter(e => e.status === '离职').length;
+  return `
+    <div class="page-header"><h1>员工档案</h1></div>
+    <div class="stats">
+      <div class="stat-card"><div class="label">员工总数</div><div class="value">${total} <span class="unit">人</span></div></div>
+      <div class="stat-card"><div class="label">在职</div><div class="value">${active} <span class="unit">人</span></div></div>
+      <div class="stat-card"><div class="label">试用</div><div class="value">${probation} <span class="unit">人</span></div></div>
+      <div class="stat-card"><div class="label">离职</div><div class="value">${resigned} <span class="unit">人</span></div></div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="empSearch" placeholder="🔍 搜索姓名 / 工号 / 手机 / 身份证" oninput="filterEmployees()">
+      <select id="empDeptFilter" onchange="filterEmployees()">
+        <option value="">全部部门</option>
+        ${db.departments.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('')}
+      </select>
+      <select id="empStatusFilter" onchange="filterEmployees()">
+        <option value="">全部状态</option>
+        <option>在职</option><option>试用</option><option>离职</option>
+      </select>
+      <button class="btn btn-primary" onclick="openEmployeeModal()">+ 新增员工</button>
+      <button class="btn btn-secondary" onclick="exportEmployeesCSV()">导出 CSV</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr>
+          ${sortableTh('empNo', '工号')}
+          ${sortableTh('name', '姓名')}
+          ${sortableTh('gender', '性别')}
+          ${sortableTh('dept', '部门')}
+          ${sortableTh('position', '岗位')}
+          <th>手机</th>
+          ${sortableTh('hireDate', '入职日期')}
+          ${sortableTh('workYears', '工龄')}
+          ${sortableTh('status', '状态')}
+          <th style="text-align:right">操作</th>
+        </tr></thead>
+        <tbody id="empTbody"></tbody>
+      </table>
+      <div id="empEmpty" class="empty" style="display:none">没有符合条件的员工</div>
+    </div>
+  `;
+}
+
+function sortableTh(field, label) {
+  const arrow = empSort.field === field
+    ? (empSort.dir === 'asc' ? '<span class="sort-arrow asc">▲</span>' : '<span class="sort-arrow desc">▼</span>')
+    : '<span class="sort-arrow idle">⇅</span>';
+  return `<th class="sortable" onclick="sortEmp('${field}')">${label} ${arrow}</th>`;
+}
+function sortEmp(field) {
+  if (empSort.field === field) empSort.dir = empSort.dir === 'asc' ? 'desc' : 'asc';
+  else { empSort.field = field; empSort.dir = 'asc'; }
+  filterEmployees();
+}
+function getSortValue(e, field) {
+  switch (field) {
+    case 'dept': return getDeptName(e.deptId);
+    case 'position': return getPosName(e.positionId);
+    case 'workYears': return getWorkDays(e.hireDate, e.status === '离职' ? e.resignDate : null);
+    default: return e[field] ?? '';
+  }
+}
+
+function filterEmployees() {
+  const q = (document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+  const deptId = document.getElementById('empDeptFilter')?.value || '';
+  const status = document.getElementById('empStatusFilter')?.value || '';
+  let list = db.employees.slice();
+  if (q) list = list.filter(e =>
+    (e.name || '').toLowerCase().includes(q) ||
+    (e.empNo || '').toLowerCase().includes(q) ||
+    (e.phone || '').includes(q) ||
+    (e.idCard || '').includes(q)
+  );
+  if (deptId) list = list.filter(e => e.deptId === deptId);
+  if (status) list = list.filter(e => e.status === status);
+
+  list.sort((a, b) => {
+    const va = getSortValue(a, empSort.field);
+    const vb = getSortValue(b, empSort.field);
+    if (va < vb) return empSort.dir === 'asc' ? -1 : 1;
+    if (va > vb) return empSort.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const tbody = document.getElementById('empTbody');
+  const empty = document.getElementById('empEmpty');
+  if (!tbody) return;
+  if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = list.map(e => {
+    const dept = db.departments.find(d => d.id === e.deptId);
+    const pos = db.positions.find(p => p.id === e.positionId);
+    const statusClass = e.status === '离职' ? 'tag tag-red' : (e.status === '试用' ? 'tag tag-orange' : 'tag tag-green');
+    const workYears = getWorkYears(e.hireDate, e.status === '离职' ? e.resignDate : null);
+    return `<tr>
+      <td><strong>${escapeHtml(e.empNo)}</strong></td>
+      <td><span class="avatar">${escapeHtml((e.name || '?').charAt(0))}</span>${escapeHtml(e.name)}</td>
+      <td>${escapeHtml(e.gender || '—')}</td>
+      <td>${dept ? `<span class="tag tag-blue">${escapeHtml(dept.name)}</span>` : '—'}</td>
+      <td>${pos ? escapeHtml(pos.name) : '—'}</td>
+      <td>${escapeHtml(e.phone || '—')}</td>
+      <td>${escapeHtml(e.hireDate || '—')}</td>
+      <td>${workYears}</td>
+      <td><span class="${statusClass}">${escapeHtml(e.status)}</span></td>
+      <td style="text-align:right">
+        <button class="btn-icon" onclick="openEmployeeModal('${e.id}')">编辑</button>
+        <button class="btn-icon btn-del" onclick="deleteEmployee('${e.id}')">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openEmployeeModal(id) {
+  const e = id ? db.employees.find(x => x.id === id) : null;
+  const deptOptions = db.departments.map(d =>
+    `<option value="${d.id}" ${e && e.deptId === d.id ? 'selected' : ''}>${escapeHtml(d.name)}</option>`).join('');
+  const supOptions = db.employees
+    .filter(x => !e || x.id !== e.id)
+    .map(x => `<option value="${x.id}" ${e && e.supervisorId === x.id ? 'selected' : ''}>${escapeHtml(x.name)}（${escapeHtml(x.empNo)}）</option>`)
+    .join('');
+  const posGroups = db.departments.map(d => {
+    const ps = db.positions.filter(p => p.deptId === d.id);
+    if (!ps.length) return '';
+    return `<optgroup label="${escapeHtml(d.name)}">${ps.map(p =>
+      `<option value="${p.id}" ${e && e.positionId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</optgroup>`;
+  }).join('');
+  const noDeptPos = db.positions.filter(p => !p.deptId);
+  const noDeptGroup = noDeptPos.length
+    ? `<optgroup label="未分配部门">${noDeptPos.map(p =>
+        `<option value="${p.id}" ${e && e.positionId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</optgroup>`
+    : '';
+
+  const body = `
+    <div class="form-grid">
+      <div class="form-group">
+        <label>工号 <span class="req">*</span></label>
+        <div class="input-with-btn">
+          <input type="text" id="m_emp_no" value="${e ? escapeHtml(e.empNo) : genEmpNo()}" placeholder="如：EMP006">
+          <button type="button" class="btn-mini" onclick="document.getElementById('m_emp_no').value=genEmpNo()">自动生成</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>姓名 <span class="req">*</span></label>
+        <input type="text" id="m_emp_name" value="${e ? escapeHtml(e.name) : ''}" placeholder="请输入姓名">
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <select id="m_emp_gender">
+          <option value="男" ${e && e.gender === '男' ? 'selected' : ''}>男</option>
+          <option value="女" ${e && e.gender === '女' ? 'selected' : ''}>女</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>出生日期</label>
+        <input type="date" id="m_emp_birth" value="${e ? escapeHtml(e.birthDate || '') : ''}">
+      </div>
+      <div class="form-group full">
+        <label>身份证号</label>
+        <input type="text" id="m_emp_idcard" value="${e ? escapeHtml(e.idCard || '') : ''}" placeholder="18 位身份证号">
+      </div>
+      <div class="form-group">
+        <label>手机号</label>
+        <input type="text" id="m_emp_phone" value="${e ? escapeHtml(e.phone || '') : ''}" placeholder="11 位手机号">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" id="m_emp_email" value="${e ? escapeHtml(e.email || '') : ''}" placeholder="name@company.com">
+      </div>
+      <div class="form-group">
+        <label>学历</label>
+        <select id="m_emp_edu">
+          ${['高中及以下','大专','本科','硕士','博士'].map(x =>
+            `<option ${e && e.education === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>部门 <span class="req">*</span></label>
+        <select id="m_emp_dept">
+          <option value="">（请选择）</option>
+          ${deptOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>岗位</label>
+        <select id="m_emp_position">
+          <option value="">（未选择）</option>
+          ${posGroups}${noDeptGroup}
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>直属上级</label>
+        <select id="m_emp_supervisor">
+          <option value="">（无）</option>
+          ${supOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>入职日期</label>
+        <input type="date" id="m_emp_hire" value="${e ? escapeHtml(e.hireDate || '') : todayStr()}">
+      </div>
+      <div class="form-group">
+        <label>用工类型</label>
+        <select id="m_emp_type">
+          ${['正式','实习','外包','临时工'].map(x =>
+            `<option ${e && e.employType === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select id="m_emp_status">
+          ${['在职','试用','离职'].map(x =>
+            `<option ${e && e.status === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>离职日期（仅离职时填写）</label>
+        <input type="date" id="m_emp_resign" value="${e ? escapeHtml(e.resignDate || '') : ''}">
+      </div>
+      <div class="form-group full">
+        <label>备注</label>
+        <textarea id="m_emp_remark" placeholder="其他补充信息">${e ? escapeHtml(e.remark || '') : ''}</textarea>
+      </div>
+    </div>
+  `;
+  showModal(e ? '编辑员工' : '新增员工', body,
+    `<button class="btn btn-cancel" onclick="closeModal()">取消</button>
+     <button class="btn btn-submit" onclick="saveEmployee('${id || ''}')">保存</button>`);
+}
+
+function diffEmployee(oldE, newData) {
+  const labels = { empNo:'工号', name:'姓名', gender:'性别', birthDate:'出生日期', idCard:'身份证', phone:'手机', email:'邮箱', education:'学历', deptId:'部门', positionId:'岗位', supervisorId:'直属上级', hireDate:'入职日期', employType:'用工类型', status:'状态', resignDate:'离职日期', remark:'备注' };
+  const changes = [];
+  Object.keys(labels).forEach(k => {
+    let ov = oldE[k] ?? '', nv = newData[k] ?? '';
+    if (k === 'deptId') { ov = getDeptName(ov); nv = getDeptName(nv); }
+    if (k === 'positionId') { ov = getPosName(ov); nv = getPosName(nv); }
+    if (k === 'supervisorId') { ov = getNameById(ov); nv = getNameById(nv); }
+    if (String(ov) !== String(nv)) changes.push(`${labels[k]}: ${ov || '空'} → ${nv || '空'}`);
+  });
+  return changes.join('；') || '无字段变更';
+}
+
+function saveEmployee(id) {
+  const empNo = document.getElementById('m_emp_no').value.trim();
+  const name = document.getElementById('m_emp_name').value.trim();
+  const deptId = document.getElementById('m_emp_dept').value;
+  if (!empNo) return toast('请填写工号', true);
+  if (!name) return toast('请填写姓名', true);
+  if (!deptId) return toast('请选择部门', true);
+
+  const dup = db.employees.find(x => x.empNo === empNo && x.id !== id);
+  if (dup) return toast('工号已存在，请更换', true);
+
+  const data = {
+    empNo, name,
+    gender: document.getElementById('m_emp_gender').value,
+    birthDate: document.getElementById('m_emp_birth').value,
+    idCard: document.getElementById('m_emp_idcard').value.trim(),
+    phone: document.getElementById('m_emp_phone').value.trim(),
+    email: document.getElementById('m_emp_email').value.trim(),
+    education: document.getElementById('m_emp_edu').value,
+    deptId,
+    positionId: document.getElementById('m_emp_position').value || '',
+    supervisorId: document.getElementById('m_emp_supervisor').value || '',
+    hireDate: document.getElementById('m_emp_hire').value,
+    employType: document.getElementById('m_emp_type').value,
+    status: document.getElementById('m_emp_status').value,
+    resignDate: document.getElementById('m_emp_resign').value,
+    remark: document.getElementById('m_emp_remark').value.trim()
+  };
+  if (!validateIdCard(data.idCard)) return toast('身份证号格式不正确（18 位，含校验位）', true);
+  if (!validatePhone(data.phone)) return toast('手机号格式不正确（应为 11 位）', true);
+  if (!validateEmail(data.email)) return toast('邮箱格式不正确', true);
+  if (data.status === '离职' && !data.resignDate) return toast('状态为离职时请填写离职日期', true);
+  if (data.status !== '离职') data.resignDate = '';
+
+  if (id) {
+    const e = db.employees.find(x => x.id === id);
+    if (e) {
+      const detail = diffEmployee(e, data);
+      Object.assign(e, data);
+      logAction('编辑员工', `${name} (${empNo})`, detail);
+    }
+  } else {
+    db.employees.push({ id: uid(), ...data });
+    logAction('新增员工', `${name} (${empNo})`, `部门: ${getDeptName(deptId)}；岗位: ${getPosName(data.positionId) || '未分配'}`);
+  }
+  saveData(); closeModal(); renderView();
+  toast('✅ 员工已保存');
+}
+
+function deleteEmployee(id) {
+  const e = db.employees.find(x => x.id === id);
+  if (!e) return;
+  const contracts = db.contracts.filter(c => c.employeeId === id);
+  let msg = `确定删除员工「${e.name}」吗？`;
+  if (contracts.length) msg += `\n该员工有 ${contracts.length} 份合同，将一并删除。`;
+  if (!confirm(msg)) return;
+  db.employees = db.employees.filter(x => x.id !== id);
+  db.contracts = db.contracts.filter(c => c.employeeId !== id);
+  db.employees.forEach(x => { if (x.supervisorId === id) x.supervisorId = ''; });
+  logAction('删除员工', `${e.name} (${e.empNo})`, contracts.length ? `同时删除 ${contracts.length} 份合同` : '');
+  saveData(); renderView();
+  toast('🗑️ 员工已删除');
+}
+
+/* ---- 导出员工 CSV ---- */
+function exportEmployeesCSV() {
+  const headers = ['工号','姓名','性别','出生日期','身份证号','手机号','邮箱','学历','部门','岗位','直属上级','入职日期','工龄','用工类型','状态','离职日期','备注'];
+  const rows = db.employees.map(e => {
+    const sup = db.employees.find(x => x.id === e.supervisorId);
+    const workYears = getWorkYears(e.hireDate, e.status === '离职' ? e.resignDate : null);
+    return [
+      e.empNo, e.name, e.gender, e.birthDate, e.idCard, e.phone, e.email, e.education,
+      getDeptName(e.deptId), getPosName(e.positionId), sup ? sup.name : '',
+      e.hireDate, workYears, e.employType, e.status, e.resignDate, e.remark
+    ];
+  });
+  const csv = '\uFEFF' + [headers, ...rows]
+    .map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `员工花名册_${todayStr()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  logAction('导出员工花名册', `共 ${db.employees.length} 人`, 'CSV 格式');
+  saveData();
+  toast('✅ 已导出员工花名册');
+}
+
+/* ===================== 合同管理 ===================== */
+function renderContracts() {
+  return `
+    <div class="page-header"><h1>合同管理</h1></div>
+    <div class="toolbar">
+      <input type="text" id="conSearch" placeholder="🔍 搜索合同编号 / 员工姓名" oninput="filterContracts()">
+      <select id="conTypeFilter" onchange="filterContracts()">
+        <option value="">全部类型</option>
+        <option>固定期限</option>
+        <option>无固定期限</option>
+        <option>以完成一定工作任务为期限</option>
+      </select>
+      <select id="conStatusFilter" onchange="filterContracts()">
+        <option value="">全部状态</option>
+        <option>生效中</option><option>已到期</option><option>已终止</option><option>待签订</option>
+      </select>
+      <button class="btn btn-primary" onclick="openContractModal()">+ 新增合同</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th>合同编号</th><th>员工</th><th>合同类型</th><th>开始日期</th><th>结束日期</th>
+          <th>剩余天数</th><th>状态</th><th style="text-align:right">操作</th>
+        </tr></thead>
+        <tbody id="conTbody"></tbody>
+      </table>
+      <div id="conEmpty" class="empty" style="display:none">没有符合条件的合同</div>
+    </div>
+  `;
+}
+
+function filterContracts() {
+  const q = (document.getElementById('conSearch')?.value || '').trim().toLowerCase();
+  const type = document.getElementById('conTypeFilter')?.value || '';
+  const status = document.getElementById('conStatusFilter')?.value || '';
+  let list = db.contracts.slice();
+  if (q) list = list.filter(c => {
+    const emp = db.employees.find(e => e.id === c.employeeId);
+    return (c.contractNo || '').toLowerCase().includes(q) ||
+           (emp && emp.name.toLowerCase().includes(q));
+  });
+  if (type) list = list.filter(c => c.type === type);
+  if (status) list = list.filter(c => c.status === status);
+
+  const tbody = document.getElementById('conTbody');
+  const empty = document.getElementById('conEmpty');
+  if (!tbody) return;
+  if (!list.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = list.map(c => {
+    const emp = db.employees.find(e => e.id === c.employeeId);
+    const cls = classifyContract(c.endDate, c.status);
+    let remainHtml;
+    if (!c.endDate && c.status === '生效中') remainHtml = '<span class="tag tag-gray">长期有效</span>';
+    else if (cls) remainHtml = `<span class="tag" style="background:${cls.bg};color:${cls.color}">${cls.label}</span>`;
+    else remainHtml = '—';
+
+    const statusClass = c.status === '生效中' ? 'tag tag-green'
+      : c.status === '已终止' ? 'tag tag-gray'
+      : c.status === '已到期' ? 'tag tag-red' : 'tag tag-orange';
+
+    return `<tr>
+      <td><strong>${escapeHtml(c.contractNo)}</strong></td>
+      <td>${emp ? `<span class="avatar">${escapeHtml(emp.name.charAt(0))}</span>${escapeHtml(emp.name)}` : '<span class="muted">（员工已删除）</span>'}</td>
+      <td>${escapeHtml(c.type)}</td>
+      <td>${escapeHtml(c.startDate || '—')}</td>
+      <td>${escapeHtml(c.endDate || '长期')}</td>
+      <td>${remainHtml}</td>
+      <td><span class="${statusClass}">${escapeHtml(c.status)}</span></td>
+      <td style="text-align:right">
+        <button class="btn-icon" onclick="openContractModal('${c.id}')">编辑</button>
+        <button class="btn-icon btn-del" onclick="deleteContract('${c.id}')">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function genContractNo() {
+  const d = new Date();
+  const ym = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0');
+  let i = 1;
+  let no;
+  do { no = `HT-${ym}-${String(i).padStart(3, '0')}`; i++; }
+  while (db.contracts.some(c => c.contractNo === no));
+  return no;
+}
+
+function openContractModal(id) {
+  const c = id ? db.contracts.find(x => x.id === id) : null;
+  const empOptions = db.employees.map(e =>
+    `<option value="${e.id}" ${c && c.employeeId === e.id ? 'selected' : ''}>${escapeHtml(e.name)}（${escapeHtml(e.empNo)}）</option>`).join('');
+  const body = `
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>合同编号 <span class="req">*</span></label>
+        <input type="text" id="m_con_no" value="${c ? escapeHtml(c.contractNo) : genContractNo()}">
+      </div>
+      <div class="form-group full">
+        <label>员工 <span class="req">*</span></label>
+        <select id="m_con_emp">
+          <option value="">（请选择）</option>
+          ${empOptions}
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>合同类型</label>
+        <select id="m_con_type">
+          ${['固定期限','无固定期限','以完成一定工作任务为期限'].map(x =>
+            `<option ${c && c.type === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>开始日期</label>
+        <input type="date" id="m_con_start" value="${c ? escapeHtml(c.startDate || '') : ''}">
+      </div>
+      <div class="form-group">
+        <label>结束日期（无固定期限可不填）</label>
+        <input type="date" id="m_con_end" value="${c ? escapeHtml(c.endDate || '') : ''}">
+      </div>
+      <div class="form-group">
+        <label>签订日期</label>
+        <input type="date" id="m_con_sign" value="${c ? escapeHtml(c.signDate || '') : todayStr()}">
+      </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select id="m_con_status">
+          ${['生效中','已到期','已终止','待签订'].map(x =>
+            `<option ${c && c.status === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>备注</label>
+        <textarea id="m_con_remark" placeholder="如：待续签、竞业限制等">${c ? escapeHtml(c.remark || '') : ''}</textarea>
+      </div>
+    </div>
+  `;
+  showModal(c ? '编辑合同' : '新增合同', body,
+    `<button class="btn btn-cancel" onclick="closeModal()">取消</button>
+     <button class="btn btn-submit" onclick="saveContract('${id || ''}')">保存</button>`);
+}
+
+function saveContract(id) {
+  const contractNo = document.getElementById('m_con_no').value.trim();
+  const employeeId = document.getElementById('m_con_emp').value;
+  if (!contractNo) return toast('请填写合同编号', true);
+  if (!employeeId) return toast('请选择员工', true);
+  const dup = db.contracts.find(x => x.contractNo === contractNo && x.id !== id);
+  if (dup) return toast('合同编号已存在，请更换', true);
+
+  const data = {
+    contractNo, employeeId,
+    type: document.getElementById('m_con_type').value,
+    startDate: document.getElementById('m_con_start').value,
+    endDate: document.getElementById('m_con_end').value,
+    signDate: document.getElementById('m_con_sign').value,
+    status: document.getElementById('m_con_status').value,
+    remark: document.getElementById('m_con_remark').value.trim()
+  };
+  const empName = getNameById(employeeId);
+  if (id) {
+    const c = db.contracts.find(x => x.id === id);
+    if (c) {
+      const old = { ...c };
+      Object.assign(c, data);
+      const changes = [];
+      if (old.contractNo !== contractNo) changes.push(`编号: ${old.contractNo} → ${contractNo}`);
+      if (old.employeeId !== employeeId) changes.push(`员工: ${getNameById(old.employeeId)} → ${empName}`);
+      if (old.type !== data.type) changes.push(`类型: ${old.type} → ${data.type}`);
+      if (old.endDate !== data.endDate) changes.push(`结束日期: ${old.endDate || '长期'} → ${data.endDate || '长期'}`);
+      if (old.status !== data.status) changes.push(`状态: ${old.status} → ${data.status}`);
+      logAction('编辑合同', `${contractNo}（${empName}）`, changes.join('；') || '无字段变更');
+    }
+  } else {
+    db.contracts.push({ id: uid(), ...data });
+    logAction('新增合同', `${contractNo}（${empName}）`, `类型: ${data.type}；结束: ${data.endDate || '长期'}`);
+  }
+  saveData(); closeModal(); renderView();
+  toast('✅ 合同已保存');
+}
+
+function deleteContract(id) {
+  const c = db.contracts.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`确定删除合同「${c.contractNo}」吗？`)) return;
+  db.contracts = db.contracts.filter(x => x.id !== id);
+  logAction('删除合同', `${c.contractNo}（${getNameById(c.employeeId)}）`, '');
+  saveData(); renderView();
+  toast('🗑️ 合同已删除');
+}
+
+/* ===================== 到期预警 ===================== */
+function renderAlerts() {
+  const buckets = { expired: [], d7: [], d30: [], d60: [], d90: [] };
+  db.contracts.forEach(c => {
+    const cls = classifyContract(c.endDate, c.status);
+    if (cls && buckets[cls.level]) buckets[cls.level].push({ c, cls });
+  });
+  const sortByDiff = (a, b) => a.cls.diff - b.cls.diff;
+  Object.values(buckets).forEach(arr => arr.sort(sortByDiff));
+
+  const total = Object.values(buckets).reduce((s, a) => s + a.length, 0);
+  const urgent = buckets.expired.length + buckets.d7.length + buckets.d30.length;
+
+  const groupHtml = (title, items, clsName) => {
+    if (!items.length) return '';
+    return `
+      <div class="alert-group ${clsName}">
+        <div class="alert-group-head">
+          <span>${title}</span>
+          <span class="cnt">${items.length} 份</span>
+        </div>
+        <table>
+          <thead><tr><th>员工</th><th>合同编号</th><th>合同类型</th><th>结束日期</th><th>剩余</th><th>备注</th></tr></thead>
+          <tbody>
+            ${items.map(({ c, cls }) => {
+              const emp = db.employees.find(e => e.id === c.employeeId);
+              return `<tr>
+                <td>${emp ? escapeHtml(emp.name) : '<span class="muted">（已删除）</span>'}</td>
+                <td>${escapeHtml(c.contractNo)}</td>
+                <td>${escapeHtml(c.type)}</td>
+                <td>${escapeHtml(c.endDate)}</td>
+                <td><span class="tag" style="background:${cls.bg};color:${cls.color}">${cls.label}</span></td>
+                <td>${escapeHtml(c.remark || '—')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  return `
+    <div class="page-header"><h1>到期预警</h1></div>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <p>
+        当前共有 <strong style="color:#d32f2f;font-size:18px">${total}</strong> 份合同在 90 天内到期或已过期，
+        其中 <strong style="color:#c62828">${urgent}</strong> 份需要在 30 天内紧急处理。
+        仅统计状态为「生效中」且有结束日期的合同。
+      </p>
+    </div>
+    ${total === 0 ? '<div class="card"><div class="empty">🎉 暂无合同到期预警</div></div>' : ''}
+    ${groupHtml('🚨 已过期', buckets.expired, 'alert-expired')}
+    ${groupHtml('🔴 7 天内到期', buckets.d7, 'alert-d7')}
+    ${groupHtml('🟠 8–30 天内到期', buckets.d30, 'alert-d30')}
+    ${groupHtml('🟡 31–60 天内到期', buckets.d60, 'alert-d60')}
+    ${groupHtml('🔵 61–90 天内到期', buckets.d90, 'alert-d90')}
+  `;
+}
+
+/* ===================== 操作日志 ===================== */
+function renderLogs() {
+  const logs = db.auditLog || [];
+  return `
+    <div class="page-header">
+      <h1>操作日志 <span class="muted" style="font-size:14px">（最近 ${logs.length} 条）</span></h1>
+      <button class="btn btn-danger" onclick="clearLogs()">清空日志</button>
+    </div>
+    <div class="card log-list">
+      ${logs.length ? `<table>
+        <thead><tr>
+          <th style="width:170px">时间</th>
+          <th style="width:110px">操作</th>
+          <th style="width:200px">对象</th>
+          <th>详情</th>
+        </tr></thead>
+        <tbody>${logs.map(l => `<tr>
+          <td class="muted">${escapeHtml(l.time)}</td>
+          <td>${escapeHtml(l.action)}</td>
+          <td>${escapeHtml(l.target)}</td>
+          <td class="log-detail">${escapeHtml(l.detail || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table>` : '<div class="empty">暂无操作日志，新增或编辑数据后会自动记录</div>'}
+    </div>
+  `;
+}
+function clearLogs() {
+  if (!db.auditLog || !db.auditLog.length) return toast('日志已经是空的');
+  if (!confirm('确定清空所有操作日志吗？此操作不可恢复。')) return;
+  db.auditLog = [];
+  saveData(); renderView();
+  toast('日志已清空');
+}
+
+/* ===================== 数据备份 & 完整性检查 ===================== */
+function renderBackup() {
+  return `
+    <div class="page-header"><h1>数据备份与恢复</h1></div>
+    <div class="card card-pad">
+      <h3>当前数据概况</h3>
+      <p>
+        部门：<strong>${db.departments.length}</strong> 个 &nbsp;|&nbsp;
+        岗位：<strong>${db.positions.length}</strong> 个 &nbsp;|&nbsp;
+        员工：<strong>${db.employees.length}</strong> 人 &nbsp;|&nbsp;
+        合同：<strong>${db.contracts.length}</strong> 份 &nbsp;|&nbsp;
+        操作日志：<strong>${(db.auditLog || []).length}</strong> 条
+      </p>
+    </div>
+    <div class="card card-pad">
+      <h3>🔍 数据健康检查</h3>
+      <p>扫描员工、部门、岗位、合同之间是否存在失效引用（如员工挂在已删除的部门下）。</p>
+      <button class="btn btn-secondary" style="margin-top:12px" onclick="runIntegrityCheck()">运行数据健康检查</button>
+      <div id="integrityResult" style="margin-top:14px"></div>
+    </div>
+    <div class="card card-pad">
+      <h3>📥 导出备份</h3>
+      <p>将当前所有数据导出为 JSON 文件，建议定期导出并保存到 U 盘或其他电脑。</p>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="exportData()">导出备份文件</button>
+    </div>
+    <div class="card card-pad">
+      <h3>📤 导入恢复</h3>
+      <p>选择之前导出的 JSON 备份文件恢复数据。<strong style="color:#d32f2f">注意：导入会覆盖当前所有数据。</strong></p>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-secondary" style="margin-top:12px" onclick="document.getElementById('importFile').click()">选择备份文件导入</button>
+    </div>
+    <div class="card card-pad">
+      <h3>⚠️ 重置数据</h3>
+      <p>清空当前所有数据，并恢复为首次打开时的示例数据。</p>
+      <button class="btn btn-danger" style="margin-top:12px" onclick="clearAllData()">清空并恢复示例数据</button>
+    </div>
+  `;
+}
+
+function checkDataIntegrity() {
+  const issues = [];
+  const deptIds = new Set(db.departments.map(d => d.id));
+  const empIds = new Set(db.employees.map(e => e.id));
+  const posIds = new Set(db.positions.map(p => p.id));
+
+  db.employees.forEach(e => {
+    if (e.deptId && !deptIds.has(e.deptId))
+      issues.push(`员工「${e.name} (${e.empNo})」的部门已不存在`);
+    if (e.positionId && !posIds.has(e.positionId))
+      issues.push(`员工「${e.name} (${e.empNo})」的岗位已不存在`);
+    if (e.supervisorId && !empIds.has(e.supervisorId))
+      issues.push(`员工「${e.name} (${e.empNo})」的直属上级已不存在`);
+  });
+  db.departments.forEach(d => {
+    if (d.parentId && !deptIds.has(d.parentId))
+      issues.push(`部门「${d.name}」的上级部门已不存在`);
+  });
+  db.contracts.forEach(c => {
+    if (!empIds.has(c.employeeId))
+      issues.push(`合同「${c.contractNo}」关联的员工已不存在（建议手动删除该合同）`);
+  });
+  return issues;
+}
+
+function runIntegrityCheck() {
+  const issues = checkDataIntegrity();
+  const el = document.getElementById('integrityResult');
+  if (!el) return;
+  if (!issues.length) {
+    el.innerHTML = '<div style="color:#2e7d32;padding:8px 0">✅ 数据健康，未发现不一致问题</div>';
+    return;
+  }
+  const fixable = issues.filter(i => !i.startsWith('合同'));
+  el.innerHTML = `
+    <div style="color:#c62828;margin-bottom:8px">发现 ${issues.length} 个问题：</div>
+    <ul style="padding-left:20px;line-height:1.9;color:#5a6373">
+      ${issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}
+    </ul>
+    ${fixable.length ? `<button class="btn btn-danger" style="margin-top:12px" onclick="autoFixIntegrity()">一键修复失效引用（${fixable.length} 项）</button>` : ''}
+  `;
+}
+
+function autoFixIntegrity() {
+  const deptIds = new Set(db.departments.map(d => d.id));
+  const empIds = new Set(db.employees.map(e => e.id));
+  const posIds = new Set(db.positions.map(p => p.id));
+  let fixed = 0;
+  db.employees.forEach(e => {
+    if (e.deptId && !deptIds.has(e.deptId)) { e.deptId = ''; fixed++; }
+    if (e.positionId && !posIds.has(e.positionId)) { e.positionId = ''; fixed++; }
+    if (e.supervisorId && !empIds.has(e.supervisorId)) { e.supervisorId = ''; fixed++; }
+  });
+  db.departments.forEach(d => {
+    if (d.parentId && !deptIds.has(d.parentId)) { d.parentId = null; fixed++; }
+  });
+  if (fixed) logAction('数据健康修复', `修复 ${fixed} 处失效引用`, '清空指向不存在记录的字段');
+  saveData();
+  runIntegrityCheck();
+  toast(`✅ 已修复 ${fixed} 处失效引用`);
+}
+
+function exportData() {
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `HRM备份_${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  logAction('导出数据备份', `部门${db.departments.length}/岗位${db.positions.length}/员工${db.employees.length}/合同${db.contracts.length}`, 'JSON 格式');
+  saveData();
+  toast('✅ 备份文件已导出');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.departments || !data.employees || !data.contracts) {
+        throw new Error('文件格式不正确，缺少必要数据表');
+      }
+      if (!confirm('导入将覆盖当前所有数据，确定继续吗？')) return;
+      db = data;
+      if (!db.auditLog) db.auditLog = [];
+      logAction('导入数据备份', file.name, `员工${db.employees.length}/合同${db.contracts.length}`);
+      saveData();
+      renderView();
+      toast('✅ 数据导入成功');
+    } catch (err) {
+      toast('❌ 导入失败：' + err.message, true);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('确定清空所有数据并恢复示例数据吗？此操作不可恢复。')) return;
+  initDemo();
+  logAction('重置数据', '恢复为示例数据', '');
+  saveData();
+  renderView();
+  toast('已重置为示例数据');
+}
+
+/* ===================== 弹窗通用 ===================== */
+function showModal(title, bodyHtml, footerHtml) {
+  document.getElementById('modalRoot').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>${title}</h2>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">${bodyHtml}</div>
+        <div class="modal-footer">${footerHtml}</div>
+      </div>
+    </div>
+  `;
+  const firstInput = document.querySelector('.modal-body input, .modal-body select');
+  if (firstInput) setTimeout(() => firstInput.focus(), 80);
+}
+function closeModal() {
+  document.getElementById('modalRoot').innerHTML = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ===================== 启动 ===================== */
+loadData();
+renderView();
+</script>
+</body>
+</html>
